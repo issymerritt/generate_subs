@@ -1,0 +1,37 @@
+[GENERAL]
+PATH_TO_CORE = ./
+PATH_TO_FRAGMENT_LIBRARY = /mnt/c/Users/issym/Documents/Work/Bordeaux_travail/generate_sub_scripts/substitue
+PROGRAM = Gaussian16
+
+[PROG_PARAMS]
+BASIS SET = PBE1PBE
+FUNCTIONAL = 6-31+G(d,p)
+CHARGE = 0
+SPIN = 1
+SOLVENT = Acetonitrile
+N_CPU = 32
+MEM = 63900
+TDDFT = ON
+
+[CORE_INFO 1]
+CORE_NAME = benzene
+STATE = 0
+CORE_TYPE = Min
+
+[CORE_INFO 2]
+CORE_NAME = benzene_distorted
+STATE = 0
+CORE_TYPE = TS
+
+[SUBSTITUTION 1]
+SUBTYPE = EDG
+CORE_AT_TO_REM = 10
+CORE_SUB_POS = 9
+FRAGMENT_LIST = CH3, Nh2
+
+[SUBSTITUTION 2]
+SUBTYPE = EWG
+CORE_AT_TO_REM = 4
+CORE_SUB_POS = 3
+FRAGMENT_LIST = BR, CN
+
