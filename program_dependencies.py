@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Literal, Optional, Dict
 
-from key_fns import Molecule
+from classes import Molecule
 
 
 class QCprog(Enum):
