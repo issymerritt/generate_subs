@@ -1,6 +1,6 @@
 import configparser
 import os
-from typing import List, Optional, Dict, Tuple
+from typing import List, Optional, Dict, Tuple, Union
 
 import numpy as np
 from numpy import ndarray
@@ -188,7 +188,7 @@ def rotate_a_to_b(A: np.array, B: np.array) -> Tuple[np.array, np.array]:
     return rot_A, trans_matrix
 
 
-def rotate_about_k(k: ndarray, theta: int | float):
+def rotate_about_k(k: ndarray, theta: Union[int, float]):
     """Returns rotation matrix (Rodriguez Formula) to rotate a vector by angle theta (in radians) about unit vector k"""
     if type(k) != np.ndarray or len(k) != 3: raise Exception('k must be of type ndarray, size 3')
     if type(theta) not in [int, float]: raise Exception('theta must either integer or floating point number')
