@@ -67,7 +67,7 @@ def get_gauss_strings(Coretype: Literal['MIN', 'TS'], CoreState: int, memory: in
                 'OptString'] = f'%mem={memory}MB\n%nprocshared={cpus}' + '\n%chk={NAME}.chk\n#P {FNAL}/{BAS_SET} TD(Nstates=3, Root={STATE}) ' + f'Opt Freq SCRF(PCM,Solvent={pcm_solvent})' + '\n \n Title \n \n {CHARGE} {SPIN}\n'
         elif Coretype == 'TS':
             out_strings[
-                'OptString'] = f'%mem={memory}MB\n%nprocshared={cpus}' + '\n%chk={NAME}.chk\n#P {FNAL}/{BAS_SET} TD(Nstates=3, Root={STATE}) ' + f'Opt=(TSm noeigen, calcfc) Freq SCRF(PCM,Solvent={pcm_solvent})' + '\n \n Title \n \n {CHARGE} {SPIN}\n'
+                'OptString'] = f'%mem={memory}MB\n%nprocshared={cpus}' + '\n%chk={NAME}.chk\n#P {FNAL}/{BAS_SET} TD(Nstates=3, Root={STATE}) ' + f'Opt=(TS, noeigen, calcfc) Freq SCRF(PCM,Solvent={pcm_solvent})' + '\n \n Title \n \n {CHARGE} {SPIN}\n'
         return out_strings
 
 
