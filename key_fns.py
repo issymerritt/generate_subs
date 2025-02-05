@@ -471,6 +471,8 @@ def connect_geoms(core: Molecule, fragment_name: str, path_to_fragment_library: 
         selected_orientation = False
         for frg_or in tqdm(joined_molecules):
             xyz_str = frg_or.gen_xyz_string()
+            print(xyz_str)
+            exit()
             mol_scf_form = gto.M(atom=xyz_str, basis='STO-3G')
             mol_scf_form.verbose = 0
             HF_en = scf.RHF(mol_scf_form).kernel()
