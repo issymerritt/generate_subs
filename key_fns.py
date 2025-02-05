@@ -448,7 +448,7 @@ def connect_geoms(core: Molecule, fragment_name: str, path_to_fragment_library: 
         # print_to_file('Running relative substitution rotation check.', out_logfile)
         ## Generate fragment rotations
         frag_orients = [frag]
-        for a in tqdm(range(1, 12)):
+        for a in range(1, 12):
             rot_fragment = deepcopy(frag)
             theta = a * (np.pi / 6)
             fragment_rot_matrix = rotate_about_k(uvector_CH, theta)
@@ -469,7 +469,7 @@ def connect_geoms(core: Molecule, fragment_name: str, path_to_fragment_library: 
 
         lowest_e = 0
         selected_orientation = False
-        for frg_or in joined_molecules:
+        for frg_or in tqdm(joined_molecules):
             xyz_str = frg_or.gen_xyz_string()
             mol_scf_form = gto.M(atom=xyz_str, basis='STO-3G')
             mol_scf_form.verbose = 0
