@@ -6,6 +6,7 @@ from multiprocessing import Pool
 from typing import List, Optional, Dict, Tuple, Union
 
 import numpy as np
+import tqdm
 from numpy import ndarray
 # noinspection PyUnresolvedReferences
 from pyscf import gto, scf
@@ -447,7 +448,7 @@ def connect_geoms(core: Molecule, fragment_name: str, path_to_fragment_library: 
         # print_to_file('Running relative substitution rotation check.', out_logfile)
         ## Generate fragment rotations
         frag_orients = [frag]
-        for a in range(1, 12):
+        for a in tqdm(range(1, 12)):
             rot_fragment = deepcopy(frag)
             theta = a * (np.pi / 6)
             fragment_rot_matrix = rotate_about_k(uvector_CH, theta)
