@@ -36,7 +36,7 @@ def write_qc_input_file(program: str, core: Molecule, program_strings: Dict, NAM
 # Program specific functions
 ####### Gaussian 16 #######
 
-def get_gauss_strings(Coretype: Literal['MIN', 'TS'], CoreState: int, memory: int = 63900, cpus: int = 32,
+def get_gauss_strings(Coretype: Literal['MIN', 'TS'], CoreState: int, memory: int = DEFAULT_MEMORY, cpus: int = DEFAULT_CPU,
                       pcm_solvent: str = 'Generic, Read') -> Dict:
     out_strings = {}
     if pcm_solvent != 'Generic, Read':
