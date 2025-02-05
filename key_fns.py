@@ -10,6 +10,7 @@ from numpy import ndarray
 # noinspection PyUnresolvedReferences
 from pyscf import gto, scf
 
+from classes import Molecule
 from program_dependencies import SUPPORTED_PROGRAMS, AVAILABLE_FRAGS, DEFAULT_CPU, DEFAULT_MEMORY, generate_program_strings, write_qc_input_file
 
 
@@ -20,7 +21,7 @@ def set_script_location():
 
 
 def run_input_checks(inputfile: str, scriptloc: str):
-    config_info = parse_input_file(inputfile, scriptloc)
+    config_info = parse_input_file(inputfile)
     check_options_in_config(config_info, SUPPORTED_PROGRAMS, AVAILABLE_FRAGS, scriptloc)
     print('Input file is valid.')
 
@@ -39,7 +40,7 @@ def list_substitution_library(script_location: str):
             print(f"[{subfolder}]: {', '.join(files)}")
 
 
-def parse_input_file(file_path: str, script_location: str) -> Optional[configparser.ConfigParser]:
+def parse_input_file(file_path: str) -> Optional[configparser.ConfigParser]:
     if not os.path.isfile(file_path):
         raise Exception(f'Input file {file_path} not found. ')
 
@@ -287,7 +288,7 @@ def add_substitutions(inputfile: str, scriptloc: str):
     # Add PATH_TO_FRAGMENT_LIBRARY if needed
     add_path_sub_library(inputfile, scriptloc)
     # Read configuration info
-    config_info = parse_input_file(inputfile, scriptloc)
+    config_info = parse_input_file(inputfile)
     check_options_in_config(config_info, SUPPORTED_PROGRAMS, AVAILABLE_FRAGS, scriptloc)
 
     list_of_frag_comb = generate_possible_combinations(config_info)
