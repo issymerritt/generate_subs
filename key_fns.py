@@ -2,7 +2,7 @@ import configparser
 import itertools
 import os
 from copy import deepcopy
-from multiprocessing import Pool
+from multiprocessing import Pool, cpu_count
 from typing import List, Optional, Dict, Tuple, Union
 
 import numpy as np
@@ -350,12 +350,24 @@ def generate_molecules_for_one_core(core_number: int, config_info: configparser.
 
 def parallel_process_attach_substitutions(fragmentlist: List[Dict], path_to_core: str, core_name: str, path_to_frag_library: str,
                                           out_logfile: str, program_keyword_dict: Dict, program: str, program_strings: Dict):
-    with Pool() as pool:
+    total_cpus = cpu_count()
+    cpus_per_process = min(8, total_cpus)  # Use up to 8 CPUs per process, but not more than available
+    num_processes = max(1, total_cpus // cpus_per_process)  # Ensure at least 1 process runs
+    with Pool(processes=num_processes, initializer=set_threads, initargs=(cpus_per_process,)) as pool:
         # Using starmap because we need to pass multiple arguments
         pool.starmap(attach_and_write_substitutions,
                      [(sublist_frags, path_to_core, core_name, path_to_frag_library, out_logfile, program_keyword_dict, program,
                        program_strings)
                       for sublist_frags in fragmentlist])
+
+
+def set_threads(cpus_per_process):
+    """Set environment variables to limit CPU usage per process."""
+    os.environ["OMP_NUM_THREADS"] = str(cpus_per_process)  # OpenMP-based libraries
+    os.environ["MKL_NUM_THREADS"] = str(cpus_per_process)  # Intel MKL
+    os.environ["NUMEXPR_NUM_THREADS"] = str(cpus_per_process)  # NumExpr
+    os.environ["OPENBLAS_NUM_THREADS"] = str(cpus_per_process)  # OpenBLAS
+    os.environ["VECLIB_MAXIMUM_THREADS"] = str(cpus_per_process)  # macOS Accelerate
 
 
 def attach_and_write_substitutions(sublist_frags: List[Dict], path_to_core: str, core_name: str, path_to_frag_library: str, out_logfile: str,
@@ -471,8 +483,6 @@ def connect_geoms(core: Molecule, fragment_name: str, path_to_fragment_library: 
         selected_orientation = False
         for frg_or in tqdm(joined_molecules):
             xyz_str = frg_or.gen_xyz_string()
-            print(xyz_str)
-            exit()
             mol_scf_form = gto.M(atom=xyz_str, basis='STO-3G')
             mol_scf_form.verbose = 0
             HF_en = scf.RHF(mol_scf_form).kernel()
