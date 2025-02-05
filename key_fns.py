@@ -9,7 +9,6 @@ import numpy as np
 from numpy import ndarray
 # noinspection PyUnresolvedReferences
 from pyscf import gto, scf
-from tqdm import tqdm
 
 from classes import Molecule
 from program_dependencies import SUPPORTED_PROGRAMS, AVAILABLE_FRAGS, DEFAULT_CPU, DEFAULT_MEMORY, generate_program_strings, write_qc_input_file
@@ -481,7 +480,7 @@ def connect_geoms(core: Molecule, fragment_name: str, path_to_fragment_library: 
 
         lowest_e = 0
         selected_orientation = False
-        for frg_or in tqdm(joined_molecules):
+        for frg_or in joined_molecules:
             xyz_str = frg_or.gen_xyz_string()
             mol_scf_form = gto.M(atom=xyz_str, basis='STO-3G')
             mol_scf_form.verbose = 0
