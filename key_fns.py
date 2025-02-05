@@ -6,10 +6,10 @@ from multiprocessing import Pool
 from typing import List, Optional, Dict, Tuple, Union
 
 import numpy as np
-import tqdm
 from numpy import ndarray
 # noinspection PyUnresolvedReferences
 from pyscf import gto, scf
+from tqdm import tqdm
 
 from classes import Molecule
 from program_dependencies import SUPPORTED_PROGRAMS, AVAILABLE_FRAGS, DEFAULT_CPU, DEFAULT_MEMORY, generate_program_strings, write_qc_input_file
