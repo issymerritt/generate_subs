@@ -82,7 +82,7 @@ def check_options_in_config(config_info: configparser.ConfigParser, supported_pr
         except ValueError:
             raise Exception(f'Core state (CORE_INFO {core_nb}) must be an integer')
         if core_name not in available_cores:
-            raise Exception(f'Core {core_name} not found at location {path_to_core_library}')
+            raise Exception(f'Core {core_name} not found at location {path_to_core_library}.\n Available cores: {available_cores} (care sensitive)')
 
     for sub_nb in range(1, nb_sub_positions + 1):
         if config_info[f'SUBSTITUTION {sub_nb}']['SUBTYPE'].upper() not in available_frags:
