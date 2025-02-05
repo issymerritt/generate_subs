@@ -2,6 +2,7 @@
 from typing import Optional, List
 
 import numpy as np
+import periodictable
 
 
 class Coord:
