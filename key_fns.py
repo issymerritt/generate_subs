@@ -115,7 +115,7 @@ def check_options_in_config(config_info: configparser.ConfigParser, supported_pr
         available_substitutions = [a.split('.')[0] for a in os.listdir(f"{path_to_frag_library}/{substitution_type}")]
         for sub_name in config_info[f'SUBSTITUTION {sub_nb}']['FRAGMENT_LIST'].replace(',', ' ').split():
             if sub_name.upper() not in available_substitutions:
-                raise Exception(f"Substitution {sub_name} not found at location {path_to_frag_library}/{sub_name}.")
+                raise Exception(f"Substitution {sub_name} not found at location {path_to_frag_library}/{substitution_type}/{sub_name}.")
 
     if config_info.get('PROG_PARAMS', 'SOLV_EPS', fallback=False) and config_info.get('PROG_PARAMS', 'SOLVENT', fallback=False):
         raise Exception('Either solvent parameters or a solvent name must be given in input file, not both.')
