@@ -69,13 +69,20 @@ def check_options_in_config(config_info: configparser.ConfigParser, supported_pr
                 raise Exception(f'Required inputs in CORE_INFO {core_nb} section: ', req_option_list_core)
 
     # Logical Checks
+    path_to_core_library = config_info.get('GENERAL', 'PATH_TO_CORE', fallback=False)
+    available_cores = [os.path.splitext(file)[0] for file in os.listdir(path_to_core_library)]
     for core_nb in range(1, nb_core_geoms + 1):
-        if config_info[f'CORE_INFO {core_nb}']['CORE_TYPE'].upper() not in ['MIN', 'TS']:
+        core_name = config_info[f'CORE_INFO {core_nb}']['CORE_NAME']
+        core_type = config_info[f'CORE_INFO {core_nb}']['CORE_TYPE'].upper()
+        core_state = config_info[f'CORE_INFO {core_nb}']['STATE']
+        if core_type not in ['MIN', 'TS']:
             raise Exception(f'Core type (CORE_INFO {core_nb}) must be either MIN or TS')
         try:
-            int(config_info[f'CORE_INFO {core_nb}']['STATE'])
+            int(core_state)
         except ValueError:
             raise Exception(f'Core state (CORE_INFO {core_nb}) must be an integer')
+        if core_name not in available_cores:
+            raise Exception(f'Core {core_name} not found at location {path_to_core_library}')
 
     for sub_nb in range(1, nb_sub_positions + 1):
         if config_info[f'SUBSTITUTION {sub_nb}']['SUBTYPE'].upper() not in available_frags:
