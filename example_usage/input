@@ -1,6 +1,5 @@
 [GENERAL]
 PATH_TO_CORE = ./
-PATH_TO_FRAGMENT_LIBRARY = /mnt/c/Users/issym/Documents/Work/Bordeaux_travail/generate_sub_scripts/substitue
 PROGRAM = Gaussian16
 
 [PROG_PARAMS]
