@@ -11,7 +11,7 @@ import argparse
 import os
 
 from key_fns import list_substitution_library, run_input_checks, add_substitutions
-from program_dependencies import extract_xyz_files, SUPPORTED_PROGRAMS
+from program_dependencies import SUPPORTED_PROGRAMS
 
 script_location = os.path.realpath(os.path.dirname(__file__))
 
@@ -36,6 +36,6 @@ if __name__ == '__main__':
         run_input_checks(args.check_input, script_location)
         exit()
 
-    if args.xyzgen:
-        extract_xyz_files(args.xyzgen, script_location)
-        exit()
+    # if args.xyzgen:
+    #     extract_xyz_files(args.xyzgen, script_location)
+    #     exit()
