@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Literal, Optional, Dict
 
-from classes import Molecule
+from key_fns import Molecule
 
 
 class QCprog(Enum):
@@ -13,6 +13,14 @@ DEFAULT_CPU: int = 32
 DEFAULT_MEMORY: int = 63900
 SUPPORTED_PROGRAMS = list(QCprog)
 AVAILABLE_FRAGS = ['EDG', 'EWG']  # TODO - fixed list ?
+
+
+# TODO xyz extracvtor
+# def extract_xyz_files(logname: str, script_location: str):
+#     detect_program
+#     if program == QCprog.GAUSSIAN16.value:
+#
+#     return
 
 
 def generate_program_strings(coretype: Literal['MIN', 'TS'], coreState: int, program: str, memory: int = 63900,
