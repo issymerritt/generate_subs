@@ -64,7 +64,7 @@ def add_path_sub_library(file_path: str, script_location: str):
             input_file.writelines(input_contents)
 
 
-def check_options_in_config(config_info: configparser.ConfigParser, supported_programs: List, available_frags: List, scriptloc: str):
+def check_options_in_config(config_info: configparser.ConfigParser, supported_programs: List, available_frag_type: List, scriptloc: str):
     # Check if all required options exist
     req_option_list_gen = ['PATH_TO_CORE', 'PROGRAM']
     nb_core_geoms = sum(1 for s in config_info.sections() if 'CORE_INFO' in s)
@@ -96,14 +96,26 @@ def check_options_in_config(config_info: configparser.ConfigParser, supported_pr
         if core_name not in available_cores:
             raise Exception(f'Core {core_name} not found at location {path_to_core_library}.\n Available cores: {available_cores} (cae sensitive)')
 
+    path_to_frag_library = config_info.get('GENERAL', 'PATH_TO_FRAGMENT_LIBRARY', fallback=False)
+    if path_to_frag_library and path_to_frag_library != f'{scriptloc}/substituent_library/':
+        print('WARNING : PATH_TO_FRAGMENT_LIBRARY defined in input file as a different directory to standard substitution library. \n'
+              '          Remove this line unless using personal substitution library.')
+    elif not path_to_frag_library:
+        path_to_frag_library = f'{scriptloc}/substituent_library/'
+
     for sub_nb in range(1, nb_sub_positions + 1):
-        if config_info[f'SUBSTITUTION {sub_nb}']['SUBTYPE'].upper() not in available_frags:
-            raise Exception(f'Unrecognised substitution type selected - available substitution types are : ', available_frags)
+        substitution_type = config_info[f'SUBSTITUTION {sub_nb}']['SUBTYPE'].upper()
+        if substitution_type not in available_frag_type:
+            raise Exception(f'Unrecognised substitution type selected - available substitution types are : ', available_frag_type)
         try:
             int(config_info[f'SUBSTITUTION {sub_nb}']['CORE_AT_TO_REM'])
             int(config_info[f'SUBSTITUTION {sub_nb}']['CORE_SUB_POS'])
         except ValueError:
             raise Exception(f'Substitution position variables (SUBSTITUTION {sub_nb}) must be integers')
+        available_substitutions = [a.split('.')[0] for a in os.listdir(f"{path_to_frag_library}/{substitution_type}")]
+        for sub_name in config_info[f'SUBSTITUTION {sub_nb}']['FRAGMENT_LIST'].replace(',', ' ').split():
+            if sub_name.upper() not in available_substitutions:
+                raise Exception(f"Substitution {sub_name} not found at location {path_to_frag_library}/{sub_name}.")
 
     if config_info.get('PROG_PARAMS', 'SOLV_EPS', fallback=False) and config_info.get('PROG_PARAMS', 'SOLVENT', fallback=False):
         raise Exception('Either solvent parameters or a solvent name must be given in input file, not both.')
@@ -144,11 +156,6 @@ def check_options_in_config(config_info: configparser.ConfigParser, supported_pr
             int(config_info['PROG_PARAMS']['MEM'])
         except ValueError:
             raise ValueError('MEM must be an integer value.')
-
-    path_to_frag_library = config_info.get('GENERAL', 'PATH_TO_FRAGMENT_LIBRARY', fallback=False)
-    if path_to_frag_library and path_to_frag_library != f'{scriptloc}/substituent_library/':
-        print('WARNING : PATH_TO_FRAGMENT_LIBRARY defined in input file as a different directory to standard substitution library. \n'
-              '          Remove this line unless using personal substitution library.')
 
 
 def extract_program_keyword_dict(config_info: configparser.ConfigParser, core_number: int) -> Dict:
@@ -256,7 +263,7 @@ def generate_possible_combinations(config_info: configparser.ConfigParser) -> Li
 
 def create_frag_list(path_to_fragment_library: str, parsed_options: Optional[configparser.SectionProxy] = None):
     fraglist = []
-    for fragment_name in parsed_options['FRAGMENT_LIST'].replace(' ', '').split(','):
+    for fragment_name in parsed_options['FRAGMENT_LIST'].replace(',', ' ').split():
         try:
             fraglist.append(select_fragment(
                 parsed_options['SUBTYPE'],
