@@ -104,18 +104,24 @@ def check_options_in_config(config_info: configparser.ConfigParser, supported_pr
         path_to_frag_library = f'{scriptloc}/substituent_library/'
 
     for sub_nb in range(1, nb_sub_positions + 1):
-        substitution_type = config_info[f'SUBSTITUTION {sub_nb}']['SUBTYPE'].upper()
-        if substitution_type not in available_frag_type:
-            raise Exception(f'Unrecognised substitution type selected - available substitution types are : ', available_frag_type)
+        substitution_types = [subtype.upper() for subtype in config_info[f'SUBSTITUTION {sub_nb}']['SUBTYPE'].replace(',', ' ').split()]
+
+        available_substitutions = []
+        for substitution_type in substitution_types:
+            if substitution_type not in available_frag_type:
+                raise Exception(f'Unrecognised substitution type selected - available substitution types are : ', available_frag_type)
+            available_substitutions.extend([a.split('.')[0] for a in os.listdir(f"{path_to_frag_library}/{substitution_type}")])
+
         try:
             int(config_info[f'SUBSTITUTION {sub_nb}']['CORE_AT_TO_REM'])
             int(config_info[f'SUBSTITUTION {sub_nb}']['CORE_SUB_POS'])
         except ValueError:
             raise Exception(f'Substitution position variables (SUBSTITUTION {sub_nb}) must be integers')
-        available_substitutions = [a.split('.')[0] for a in os.listdir(f"{path_to_frag_library}/{substitution_type}")]
+
         for sub_name in config_info[f'SUBSTITUTION {sub_nb}']['FRAGMENT_LIST'].replace(',', ' ').split():
             if sub_name.upper() not in available_substitutions:
-                raise Exception(f"Substitution {sub_name} not found at location {path_to_frag_library}/{substitution_type}/{sub_name}.")
+                print(available_substitutions)
+                raise Exception(f"Substitution {sub_name} not found in {substitution_types} at {path_to_frag_library}.")
 
     if config_info.get('PROG_PARAMS', 'SOLV_EPS', fallback=False) and config_info.get('PROG_PARAMS', 'SOLVENT', fallback=False):
         raise Exception('Either solvent parameters or a solvent name must be given in input file, not both.')
@@ -266,7 +272,7 @@ def create_frag_list(path_to_fragment_library: str, parsed_options: Optional[con
     for fragment_name in parsed_options['FRAGMENT_LIST'].replace(',', ' ').split():
         try:
             fraglist.append(select_fragment(
-                parsed_options['SUBTYPE'],
+                parsed_options['SUBTYPE'].replace(',', ' ').split(),
                 fragment_name.upper(),
                 int(parsed_options['CORE_AT_TO_REM']),
                 int(parsed_options['CORE_SUB_POS']),
@@ -277,17 +283,20 @@ def create_frag_list(path_to_fragment_library: str, parsed_options: Optional[con
     return fraglist
 
 
-def select_fragment(fragtype: str, subst_name: str, h_rem: int, core_pos: int, frag_library_loc: str) -> Optional[Dict]:
+def select_fragment(fragtype: list, subst_name: str, h_rem: int, core_pos: int, frag_library_loc: str) -> Optional[Dict]:
     frag = {
-        'FragType': fragtype,
+        # 'FragType': fragtype,
         'H_rem': h_rem,
         'CorePos': core_pos,
+        'FragType': None,
     }
-    poss_sub_list = [fname.upper().replace('.XYZ', '') for fname in os.listdir(f'{frag_library_loc}/{fragtype}')]
-    if subst_name.upper() in poss_sub_list:
-        frag['Name'] = subst_name
-    else:
-        raise Exception(f'{subst_name.upper()} is invalid input for type {fragtype} - must be one of {poss_sub_list}')
+    for frags in fragtype:
+        poss_sub_list = [fname.upper().replace('.XYZ', '') for fname in os.listdir(f'{frag_library_loc}/{frags}')]
+        if subst_name.upper() in poss_sub_list:
+            frag['Name'] = subst_name
+            frag['FragType'] = frags.upper()
+    if not frag['FragType']:
+        raise Exception(f'{subst_name.upper()} is not a known substitution for types {fragtype}')
     return frag
 
 
