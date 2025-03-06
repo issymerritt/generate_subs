@@ -11,7 +11,8 @@ from numpy import ndarray
 from pyscf import gto, scf
 
 from classes import Molecule
-from program_dependencies import SUPPORTED_PROGRAMS, AVAILABLE_FRAGS, DEFAULT_CPU, DEFAULT_MEMORY, generate_program_strings, write_qc_input_file
+from program_dependencies import SUPPORTED_PROGRAMS, AVAILABLE_FRAGS, DEFAULT_CPU, DEFAULT_MEMORY, generate_program_strings, write_qc_input_file, \
+    QCprog
 
 
 ######################### GENERIC KEY FUNCTIONS #########################
@@ -133,7 +134,8 @@ def check_options_in_config(config_info: configparser.ConfigParser, supported_pr
             config_info.get('PROG_PARAMS', 'SOLV_EPSINF', fallback=False),
         ]):
             raise Exception('Both SOLV_EPS and SOLV_EPSINF must be given when defining own solvent parameters.')
-    elif config_info['GENERAL']['PROGRAM'].upper() not in supported_programs:
+
+    if QCprog(config_info['GENERAL']['PROGRAM'].upper()) not in supported_programs:
         raise Exception('PROGRAM must be one of : ', supported_programs)
     if config_info.get('PROG_PARAMS', 'TDDFT', fallback='ON') not in ['OFF', 'ON']:
         raise Exception('TDDFT keyword must be followed by either OFF or ON (default = ON for GS calculations)')
