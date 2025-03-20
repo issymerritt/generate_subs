@@ -11,7 +11,6 @@ import argparse
 import os
 
 from key_fns import list_substitution_library, run_input_checks, add_substitutions
-from program_dependencies import SUPPORTED_PROGRAMS
 
 script_location = os.path.realpath(os.path.dirname(__file__))
 
@@ -19,7 +18,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Substituent Generation Script')
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('-sub', '-S', action='store_true', help='List available files in substitution library')
-    group.add_argument('-xyzgen', '-X', type=str, help=f'Extract xyz files from QC output file - compatible with {SUPPORTED_PROGRAMS}')
     group.add_argument('-generate', '-G', type=str, help='Generate submission files for a set of substituted geometries')
     group.add_argument('-check_input', '-C', type=str, help='Check if given input file is acceptable.')
     args = parser.parse_args()
@@ -35,7 +33,3 @@ if __name__ == '__main__':
     if args.check_input:
         run_input_checks(args.check_input, script_location)
         exit()
-
-    # if args.xyzgen:
-    #     extract_xyz_files(args.xyzgen, script_location)
-    #     exit()
