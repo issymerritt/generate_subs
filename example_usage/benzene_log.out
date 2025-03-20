@@ -1,6 +1,0 @@
-Core molecule: benzene - 12 atoms.  Type = Min, State = 0
-Keywords used for CORE benzene : {'FNAL': '6-31+G(d,p)', 'BAS_SET': 'PBE1PBE', 'CHARGE': 0, 'SPIN': 1, 'STATE': 0, 'CORETYPE': 'Min', 'TDDFT': 'ON', 'SOLVENT': 'Acetonitrile', 'N_CPU': 32, 'MEM': 63900}
-Input files generated: 
-Core molecule: benzene - 12 atoms.  Type = Min, State = 0
-Keywords used for CORE benzene : {'FNAL': '6-31+G(d,p)', 'BAS_SET': 'PBE1PBE', 'CHARGE': 0, 'SPIN': 1, 'STATE': 0, 'CORETYPE': 'Min', 'TDDFT': 'ON', 'SOLVENT': 'Acetonitrile', 'N_CPU': 32, 'MEM': 63900}
-Input files generated: 
