@@ -95,7 +95,7 @@ def check_options_in_config(config_info: configparser.ConfigParser, supported_pr
         except ValueError:
             raise Exception(f'Core state (CORE_INFO {core_nb}) must be an integer')
         if core_name not in available_cores:
-            raise Exception(f'Core {core_name} not found at location {path_to_core_library}.\n Available cores: {available_cores} (cae sensitive)')
+            raise Exception(f'Core {core_name} not found at location {path_to_core_library}.\n Available cores: {available_cores} (case sensitive)')
 
     path_to_frag_library = config_info.get('GENERAL', 'PATH_TO_FRAGMENT_LIBRARY', fallback=False)
     if path_to_frag_library and path_to_frag_library != f'{scriptloc}/substituent_library/':
@@ -105,7 +105,7 @@ def check_options_in_config(config_info: configparser.ConfigParser, supported_pr
         path_to_frag_library = f'{scriptloc}/substituent_library/'
 
     for sub_nb in range(1, nb_sub_positions + 1):
-        substitution_types = [subtype.upper() for subtype in config_info[f'SUBSTITUTION {sub_nb}']['SUBTYPE'].replace(',', ' ').split()]
+        substitution_types = [subtype.upper() for subtype in config_info[f'SUBSTITUTION {sub_nb}']['SUBTYPES'].replace(',', ' ').split()]
 
         available_substitutions = []
         for substitution_type in substitution_types:
@@ -121,8 +121,8 @@ def check_options_in_config(config_info: configparser.ConfigParser, supported_pr
 
         for sub_name in config_info[f'SUBSTITUTION {sub_nb}']['FRAGMENT_LIST'].replace(',', ' ').split():
             if sub_name.upper() not in available_substitutions:
-                print(available_substitutions)
-                raise Exception(f"Substitution {sub_name} not found in {substitution_types} at {path_to_frag_library}.")
+                if sub_name.upper() != 'NONE':
+                    raise Exception(f"Substitution {sub_name} not found in {substitution_types} at {path_to_frag_library}.")
 
     if config_info.get('PROG_PARAMS', 'SOLV_EPS', fallback=False) and config_info.get('PROG_PARAMS', 'SOLVENT', fallback=False):
         raise Exception('Either solvent parameters or a solvent name must be given in input file, not both.')
@@ -274,7 +274,7 @@ def create_frag_list(path_to_fragment_library: str, parsed_options: Optional[con
     for fragment_name in parsed_options['FRAGMENT_LIST'].replace(',', ' ').split():
         try:
             fraglist.append(select_fragment(
-                parsed_options['SUBTYPE'].replace(',', ' ').split(),
+                parsed_options['SUBTYPES'].replace(',', ' ').split(),
                 fragment_name.upper(),
                 int(parsed_options['CORE_AT_TO_REM']),
                 int(parsed_options['CORE_SUB_POS']),
@@ -287,7 +287,6 @@ def create_frag_list(path_to_fragment_library: str, parsed_options: Optional[con
 
 def select_fragment(fragtype: list, subst_name: str, h_rem: int, core_pos: int, frag_library_loc: str) -> Optional[Dict]:
     frag = {
-        # 'FragType': fragtype,
         'H_rem': h_rem,
         'CorePos': core_pos,
         'FragType': None,
@@ -297,6 +296,9 @@ def select_fragment(fragtype: list, subst_name: str, h_rem: int, core_pos: int, 
         if subst_name.upper() in poss_sub_list:
             frag['Name'] = subst_name
             frag['FragType'] = frags.upper()
+    if subst_name.upper() == 'NONE':
+        frag['Name'] = 'NONE'
+        frag['FragType'] = 'NONE'
     if not frag['FragType']:
         raise Exception(f'{subst_name.upper()} is not a known substitution for types {fragtype}')
     return frag
@@ -340,7 +342,7 @@ def add_substitutions(inputfile: str, scriptloc: str):
         generate_molecules_for_one_core(core_number, config_info, list_of_frag_comb, program_keyword_dict, out_logfile)
 
 
-def generate_molecules_for_one_core(core_number: int, config_info: configparser.ConfigParser, fragmentlist: List[Dict],
+def generate_molecules_for_one_core(core_number: int, config_info: configparser.ConfigParser, fragmentlist: List,
                                     program_keyword_dict: Dict, out_logfile: str):
     core_name = str(config_info[f'CORE_INFO {core_number}']['CORE_NAME'])
     path_to_frag_library = config_info['GENERAL']['PATH_TO_FRAGMENT_LIBRARY']
@@ -354,11 +356,25 @@ def generate_molecules_for_one_core(core_number: int, config_info: configparser.
         os.system(f'mkdir input_files/{core_name}')
 
     print_to_file('Input files generated: ', out_logfile)
-    parallel_process_attach_substitutions(fragmentlist, path_to_core, core_name, path_to_frag_library, out_logfile, program_keyword_dict, program,
-                                          program_strings)
+
+    if config_info.get('GENERAL', 'PARALLEL', fallback='ON').upper() == 'OFF':
+        print_to_file('Generating input files in series', out_logfile)
+        serial_process_attach_substitutions(fragmentlist, path_to_core, core_name, path_to_frag_library, out_logfile, program_keyword_dict, program,
+                                            program_strings)
+    else:
+        print_to_file('Generating input files in parallel', out_logfile)
+        parallel_process_attach_substitutions(fragmentlist, path_to_core, core_name, path_to_frag_library, out_logfile, program_keyword_dict, program,
+                                              program_strings)
 
 
-def parallel_process_attach_substitutions(fragmentlist: List[Dict], path_to_core: str, core_name: str, path_to_frag_library: str,
+def serial_process_attach_substitutions(fragmentlist: List, path_to_core: str, core_name: str, path_to_frag_library: str,
+                                        out_logfile: str, program_keyword_dict: Dict, program: str, program_strings: Dict):
+    for sublist_frags in fragmentlist:
+        attach_and_write_substitutions(sublist_frags, path_to_core, core_name, path_to_frag_library, out_logfile, program_keyword_dict, program,
+                                       program_strings)
+
+
+def parallel_process_attach_substitutions(fragmentlist: List, path_to_core: str, core_name: str, path_to_frag_library: str,
                                           out_logfile: str, program_keyword_dict: Dict, program: str, program_strings: Dict):
     total_cpus = cpu_count()
     cpus_per_process = min(8, total_cpus)  # Use up to 8 CPUs per process, but not more than available
@@ -401,106 +417,110 @@ def attach_and_write_substitutions(sublist_frags: List[Dict], path_to_core: str,
 
 
 def connect_geoms(core: Molecule, fragment_name: str, path_to_fragment_library: str, core_sub_pos: int, core_at_to_remove: int):
-    # print_to_file(f'Attaching {fragment_name} to position {core_sub_pos}', out_logfile)
-    path_to_fragment = path_to_fragment_library + f'{fragment_name}'
-    frag = Molecule(filename=path_to_fragment)
-
-    ## Connect substituent to core
-    core_atom = core_sub_pos
-    core_h = core_at_to_remove
-    fragment_atom = int(frag.label.split(';')[1].split()[-1])  # Fragment sub. position
-    fragment_h = int(frag.label.split(';')[0].split()[-1])  # Fragment H to remove
-    if len(frag.coords) > 2:
-        adjacent_atom_fragment = int(frag.label.split(';')[2].split()[-1])  # Fragment adjacent atom
+    if fragment_name.upper() == 'NONE':
+        # Skip all connection stuff when wanting NO substitution
+        return core
     else:
-        adjacent_atom_fragment = False
+        # print_to_file(f'Attaching {fragment_name} to position {core_sub_pos}', out_logfile)
+        path_to_fragment = path_to_fragment_library + f'{fragment_name}'
+        frag = Molecule(filename=path_to_fragment)
 
-    # Check if rotation of substitution will be necessary
-
-    if len(frag.coords) == 2:  # Single atom substitution
-        rotation_check = False
-    elif len(frag.coords) == 3 and abs(
-            frag.angle(fragment_h, fragment_atom, adjacent_atom_fragment)) > 179.5:  # Linear substitution (e.g. C=N group)
-        rotation_check = False
-    else:
-        rotation_check = True
-
-    ## Shift geometries such that core_atom (Core substitution position) and fragment_h (H to remove from Substitution) are superposed at the origin
-
-    translate_core = core.coords[core_atom].xyz_coords
-    translate_frag = frag.coords[fragment_h].xyz_coords
-
-    for atom in core.coords:
-        core.coords[atom].xyz_coords = core.coords[atom].xyz_coords - translate_core
-    for atom in frag.coords:
-        frag.coords[atom].xyz_coords = frag.coords[atom].xyz_coords - translate_frag
-
-    ## Get unit vectors for C-H and H-F
-    uvector_CH = core.coords[core_h].xyz_coords / np.linalg.norm(core.coords[core_h].xyz_coords)
-    uvector_HF = frag.coords[fragment_atom].xyz_coords / np.linalg.norm(frag.coords[fragment_atom].xyz_coords)
-
-    ## Get rotation matrix
-    vec_F1_rot_norm, rot_matrix = rotate_a_to_b(uvector_HF, uvector_CH)
-
-    ## Rotate fragment to align core_atom-fragment_h and fragment_atom-fragment_h
-    for atom in frag.coords:
-        if atom == fragment_atom:
-            frag.coords[atom].xyz_coords = vec_F1_rot_norm * np.linalg.norm(frag.coords[fragment_atom].xyz_coords)
+        ## Connect substituent to core
+        core_atom = core_sub_pos
+        core_h = core_at_to_remove
+        fragment_atom = int(frag.label.split(';')[1].split()[-1])  # Fragment sub. position
+        fragment_h = int(frag.label.split(';')[0].split()[-1])  # Fragment H to remove
+        if len(frag.coords) > 2:
+            adjacent_atom_fragment = int(frag.label.split(';')[2].split()[-1])  # Fragment adjacent atom
         else:
-            frag.coords[atom].xyz_coords = np.matmul(rot_matrix, frag.coords[atom].xyz_coords)
+            adjacent_atom_fragment = False
 
-    ## Remove excess hydrogens
-    core_no_h = deepcopy(core)
-    del core_no_h.coords[core_h]
-    del frag.coords[fragment_h]
-    core_no_h.coords[core_atom].set_label('CORE_SUB_POS')
-    frag.coords[fragment_atom].set_label('FRAG_SUB_POS')
-    if adjacent_atom_fragment:
-        frag.coords[adjacent_atom_fragment].set_label('adjacent_atom_fragment')
+        # Check if rotation of substitution will be necessary
 
-    # Single atom substitution - no rotation test
-    if not rotation_check:  # Single atom substitution
-        combined_coord = [core_no_h.coords[idx] for idx in core_no_h.coords]
-        combined_coord += [frag.coords[idx] for idx in frag.coords]
-        joined_mol = Molecule(coord_list=combined_coord)
-        # print_to_file('Skipping rotation check - linear or single atom substitution.', out_logfile)
-        return joined_mol
+        if len(frag.coords) == 2:  # Single atom substitution
+            rotation_check = False
+        elif len(frag.coords) == 3 and abs(
+                frag.angle(fragment_h, fragment_atom, adjacent_atom_fragment)) > 179.5:  # Linear substitution (e.g. C=N group)
+            rotation_check = False
+        else:
+            rotation_check = True
 
-    else:
-        # print_to_file('Running relative substitution rotation check.', out_logfile)
-        ## Generate fragment rotations
-        frag_orients = [frag]
-        for a in range(1, 12):
-            rot_fragment = deepcopy(frag)
-            theta = a * (np.pi / 6)
-            fragment_rot_matrix = rotate_about_k(uvector_CH, theta)
-            for atom in rot_fragment.coords:
-                rot_fragment.coords[atom].xyz_coords = np.matmul(fragment_rot_matrix,
-                                                                 rot_fragment.coords[atom].xyz_coords)
-            frag_orients += [rot_fragment]
+        ## Shift geometries such that core_atom (Core substitution position) and fragment_h (H to remove from Substitution) are superposed at the origin
 
-        ## Join fragments and cores and find lowest energy (HF, STO-3G) orientation
+        translate_core = core.coords[core_atom].xyz_coords
+        translate_frag = frag.coords[fragment_h].xyz_coords
 
-        combined_coords = []
-        for fr in frag_orients:
-            cc = [core_no_h.coords[idx] for idx in core_no_h.coords]
-            cc += [fr.coords[idx] for idx in fr.coords]
-            combined_coords += [cc]
+        for atom in core.coords:
+            core.coords[atom].xyz_coords = core.coords[atom].xyz_coords - translate_core
+        for atom in frag.coords:
+            frag.coords[atom].xyz_coords = frag.coords[atom].xyz_coords - translate_frag
 
-        joined_molecules = [Molecule(coord_list=a) for a in combined_coords]
+        ## Get unit vectors for C-H and H-F
+        uvector_CH = core.coords[core_h].xyz_coords / np.linalg.norm(core.coords[core_h].xyz_coords)
+        uvector_HF = frag.coords[fragment_atom].xyz_coords / np.linalg.norm(frag.coords[fragment_atom].xyz_coords)
 
-        lowest_e = 0
-        selected_orientation = False
-        for frg_or in joined_molecules:
-            xyz_str = frg_or.gen_xyz_string()
-            mol_scf_form = gto.M(atom=xyz_str, basis='STO-3G')
-            mol_scf_form.verbose = 0
-            HF_en = scf.RHF(mol_scf_form).kernel()
-            if HF_en < lowest_e:
-                lowest_e = HF_en
-                selected_orientation = deepcopy(frg_or)
+        ## Get rotation matrix
+        vec_F1_rot_norm, rot_matrix = rotate_a_to_b(uvector_HF, uvector_CH)
 
-        if not selected_orientation: raise Exception(
-            'Script failed to find lowest energy orientation of fragment molecule')
+        ## Rotate fragment to align core_atom-fragment_h and fragment_atom-fragment_h
+        for atom in frag.coords:
+            if atom == fragment_atom:
+                frag.coords[atom].xyz_coords = vec_F1_rot_norm * np.linalg.norm(frag.coords[fragment_atom].xyz_coords)
+            else:
+                frag.coords[atom].xyz_coords = np.matmul(rot_matrix, frag.coords[atom].xyz_coords)
 
-        return selected_orientation
+        ## Remove excess hydrogens
+        core_no_h = deepcopy(core)
+        del core_no_h.coords[core_h]
+        del frag.coords[fragment_h]
+        core_no_h.coords[core_atom].set_label('CORE_SUB_POS')
+        frag.coords[fragment_atom].set_label('FRAG_SUB_POS')
+        if adjacent_atom_fragment:
+            frag.coords[adjacent_atom_fragment].set_label('adjacent_atom_fragment')
+
+        # Single atom substitution - no rotation test
+        if not rotation_check:  # Single atom substitution
+            combined_coord = [core_no_h.coords[idx] for idx in core_no_h.coords]
+            combined_coord += [frag.coords[idx] for idx in frag.coords]
+            joined_mol = Molecule(coord_list=combined_coord)
+            # print_to_file('Skipping rotation check - linear or single atom substitution.', out_logfile)
+            return joined_mol
+
+        else:
+            # print_to_file('Running relative substitution rotation check.', out_logfile)
+            ## Generate fragment rotations
+            frag_orients = [frag]
+            for a in range(1, 10):
+                rot_fragment = deepcopy(frag)
+                theta = a * (np.pi / 5)
+                fragment_rot_matrix = rotate_about_k(uvector_CH, theta)
+                for atom in rot_fragment.coords:
+                    rot_fragment.coords[atom].xyz_coords = np.matmul(fragment_rot_matrix,
+                                                                     rot_fragment.coords[atom].xyz_coords)
+                frag_orients += [rot_fragment]
+
+            ## Join fragments and cores and find lowest energy (HF, STO-3G) orientation
+
+            combined_coords = []
+            for fr in frag_orients:
+                cc = [core_no_h.coords[idx] for idx in core_no_h.coords]
+                cc += [fr.coords[idx] for idx in fr.coords]
+                combined_coords += [cc]
+
+            joined_molecules = [Molecule(coord_list=a) for a in combined_coords]
+
+            lowest_e = 0
+            selected_orientation = False
+            for frg_or in joined_molecules:
+                xyz_str = frg_or.gen_xyz_string()
+                mol_scf_form = gto.M(atom=xyz_str, basis='STO-3G')
+                mol_scf_form.verbose = 0
+                HF_en = scf.RHF(mol_scf_form).kernel()
+                if HF_en < lowest_e:
+                    lowest_e = HF_en
+                    selected_orientation = deepcopy(frg_or)
+
+            if not selected_orientation: raise Exception(
+                'Script failed to find lowest energy orientation of fragment molecule')
+
+            return selected_orientation

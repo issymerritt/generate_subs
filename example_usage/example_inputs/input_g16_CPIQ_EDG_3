@@ -1,0 +1,49 @@
+[GENERAL]
+PATH_TO_CORE = ../core_library_Rigid_ESIPT/
+PROGRAM = Gaussian16
+
+[PROG_PARAMS]
+FUNCTIONAL = PBE1PBE
+BASIS SET = 6-31+G(d,p)
+CHARGE = 0
+SPIN = 1
+SOLVENT = Acetonitrile
+N_CPU = 40
+MEM = 63900
+TDDFT = ON
+
+[CORE_INFO 1]
+CORE_NAME = Rigid_ESIPT_Enol
+STATE = 0
+CORE_TYPE = Min
+
+[CORE_INFO 2]
+CORE_NAME = Rigid_ESIPT_Keto
+STATE = 0
+CORE_TYPE = Min
+
+[CORE_INFO 3]
+CORE_NAME = Rigid_ESIPT_TS
+STATE = 0
+CORE_TYPE = TS
+
+[CORE_INFO 4]
+CORE_NAME = Rigid_ESIPT_Enol_S1
+STATE = 1
+CORE_TYPE = Min
+
+[CORE_INFO 5]
+CORE_NAME = Rigid_ESIPT_Keto_S1
+STATE = 1
+CORE_TYPE = Min
+
+[CORE_INFO 6]
+CORE_NAME = Rigid_ESIPT_TS_S1
+STATE = 1
+CORE_TYPE = TS
+
+[SUBSTITUTION 1]
+SUBTYPE = EDG
+CORE_AT_TO_REM = 4
+CORE_SUB_POS = 3
+FRAGMENT_LIST = acylamido_ch2ch3 acylamido_ch3 acylamido_phenyl acyloxy_ch2ch3 acyloxy_ch3 acyloxy_chch2 acyloxy_phenyl CH3 och2ch3 och2phenyl och3 ochch2 ophenyl phenyl
