@@ -4,7 +4,7 @@ PROGRAM = Gaussian16
 
 [PROG_PARAMS]
 FUNCTIONAL = PBE1PBE
-BASIS SET = 6-31+G(d,p)
+BASIS_SET = 6-31+G(d,p)
 CHARGE = 0
 SPIN = 1
 SOLVENT = Acetonitrile

@@ -71,7 +71,7 @@ def check_options_in_config(config_info: configparser.ConfigParser, supported_pr
     nb_core_geoms = sum(1 for s in config_info.sections() if 'CORE_INFO' in s)
     nb_sub_positions = sum(1 for s in config_info.sections() if 'SUBSTITUTION' in s)
     req_option_list_core = ['CORE_NAME', 'STATE', 'CORE_TYPE']
-    req_option_list_qc = ['BASIS SET', 'FUNCTIONAL', 'CHARGE', 'SPIN']
+    req_option_list_qc = ['BASIS_SET', 'FUNCTIONAL', 'CHARGE', 'SPIN']
     if any(option is False for option in [config_info.get('GENERAL', a) for a in req_option_list_gen]):
         raise Exception('Required inputs in GENERAL section: ', req_option_list_gen)
     elif any(option is False for option in [config_info.get('PROG_PARAMS', a) for a in req_option_list_qc]):
@@ -167,7 +167,7 @@ def check_options_in_config(config_info: configparser.ConfigParser, supported_pr
 
 
 def extract_program_keyword_dict(config_info: configparser.ConfigParser, core_number: int) -> Dict:
-    program_keyword_dict = dict(FNAL=config_info['PROG_PARAMS']['FUNCTIONAL'], BAS_SET=config_info['PROG_PARAMS']['BASIS SET'],
+    program_keyword_dict = dict(FNAL=config_info['PROG_PARAMS']['FUNCTIONAL'], BAS_SET=config_info['PROG_PARAMS']['BASIS_SET'],
                                 CHARGE=int(config_info['PROG_PARAMS']['CHARGE']), SPIN=int(config_info['PROG_PARAMS']['SPIN']),
                                 STATE=int(config_info[f'CORE_INFO {core_number}']['STATE']),
                                 CORETYPE=config_info[f'CORE_INFO {core_number}']['CORE_TYPE'])
