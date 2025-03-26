@@ -50,8 +50,50 @@ Required arguments are:
 
 Optional arguments are:
 
-- ```PARALLEL```: whether the input generator should be allowed to run in parallel or not (default = ON), the scripts will automatically determine how many cpus are available.
+- ```PARALLEL```: whether the input generator should be allowed to run in parallel or not (default = ON), the scripts will automatically determine how many cpus are available and the optimal way to parallelise.
 
+### ```[PROG_PARAMS]``` block
+
+This section defines universal parameters for the quantum chemistry input files to be written.
+
+Required arguments are:
+
+- ```FUNCTIONAL``` : the DFT functional (name convention should match that used by the QC program selected)
+- ```BASIS_SET``` : the basis set (name convention should match that used by the QC program selected)
+- ```CHARGE``` : the overall charge of the system
+- ```SPIN``` : the total spin of the system (0 = singlet)
+
+To select a solvent for PCM, either use;
+
+- ```SOLVENT``` : the PCM solvent (for gas phase calculations, use SOLVENT = None)
+
+or to define your own PCM solvent, use
+
+- ```SOLV_EPS``` : dielectric constant
+- ```SOLV_EPSINF``` : refractive index squared
+
+Optional arguments for this section are:
+
+- ```N_CPU``` : number of cpu for the QC calculations (default = 32)
+- ```MEM``` : memory for the QC calculation (default = 63900MB)
+- ```TDDFT``` : whether single point TD-DFT calculations should be run after optimisation of ground state geometries. Default = ON.
+
+### ```[CORE_INFO x]``` block
+
+Sequentially numbered sections (```[CORE_INFO 1], [CORE_INFO 2], ...```) are required for each "key" geometry (Minima, TS) to be investigated. Within each block, required arguments are:
+
+- ```CORE_NAME``` : the name of the xyz file (without .xyz extension) containing the coordinates of this geometry for the unsubstitutued molecule
+- ```STATE``` : whether this geometry corresponds to a stationary point on the ground state or an excited state (0 = GS, 1 = ES1, 2 = ES2, etc.)
+- ```CORE_TYPE``` : whether substituted molecules starting from this geometry should be optimised to a minimum or a transition state
+
+### ```[SUBSTITUTION x]``` block
+
+Finally, sequentially numbered sections (```[SUBSTITUTION 1], [SUBSTITUTION 2], ...``` ) for each substitution position of the molecule are required. Within each block, required arguments are:
+
+- ```SUBTYPES``` : a (comma separated) list of the folders within the substitution_library which contain the substitutions to ve investigated
+- ```CORE_SUB_POS``` : the atom number (matching xyz ordering) of the substitution position on the central core geometry
+- ```CORE_AT_TO_REM``` : the atom number (matching xyz ordering) of the hydrogen/other atom to be deleted from the central core geometry and replaced by the substitution
+- ```FRAGMENT_LIST``` : a (comma separated) list of substitutions to be investigated. To include the option of no substitution at this position, the option NONE can be included in this list. 
 
 
 
