@@ -70,17 +70,19 @@ def check_options_in_config(config_info: configparser.ConfigParser, supported_pr
     req_option_list_gen = ['PATH_TO_CORE', 'PROGRAM']
     nb_core_geoms = sum(1 for s in config_info.sections() if 'CORE_INFO' in s)
     nb_sub_positions = sum(1 for s in config_info.sections() if 'SUBSTITUTION' in s)
-    req_option_list_core = ['CORE_NAME', 'STATE', 'CORE_TYPE']
     req_option_list_qc = ['BASIS_SET', 'FUNCTIONAL', 'CHARGE', 'SPIN']
-    if any(option is False for option in [config_info.get('GENERAL', a) for a in req_option_list_gen]):
-        raise Exception('Required inputs in GENERAL section: ', req_option_list_gen)
-    elif any(option is False for option in [config_info.get('PROG_PARAMS', a) for a in req_option_list_qc]):
-        raise Exception('Required inputs in PROG_PARAMS section: ', req_option_list_qc)
-    else:
-        for core_nb in range(1, nb_core_geoms + 1):
-            if any(option is False for option in [config_info.get(f'CORE_INFO {core_nb}', a) for a in req_option_list_core]):
-                raise Exception(f'Required inputs in CORE_INFO {core_nb} section: ', req_option_list_core)
-
+    req_option_list_core = ['CORE_NAME', 'STATE', 'CORE_TYPE']
+    req_option_list_sub = ['SUBTYPES', 'CORE_SUB_POS', 'CORE_AT_TO_REM', 'FRAGMENT_LIST']
+    if any(option is False for option in [config_info.get('GENERAL', a, fallback=False) for a in req_option_list_gen]):
+        raise Exception('Missing option in GENERAL section.  Required inputs : ', req_option_list_gen)
+    if any(option is False for option in [config_info.get('PROG_PARAMS', a, fallback=False) for a in req_option_list_qc]):
+        raise Exception('Missing option in PROG_PARAMS section. Required inputs : ', req_option_list_qc)
+    for core_nb in range(1, nb_core_geoms + 1):
+        if any(option is False for option in [config_info.get(f'CORE_INFO {core_nb}', a, fallback=False) for a in req_option_list_core]):
+            raise Exception(f'Missing option in CORE_INFO {core_nb} section. Required inputs : ', req_option_list_core)
+    for sub_nb in range(1, nb_sub_positions + 1):
+        if any(option is False for option in [config_info.get(f'SUBSTITUTION {sub_nb}', a, fallback=False) for a in req_option_list_sub]):
+            raise Exception(f'Missing option in CORE_INFO {sub_nb} section. Required inputs : ', req_option_list_sub)
     # Logical Checks
     path_to_core_library = config_info.get('GENERAL', 'PATH_TO_CORE', fallback=False)
     available_cores = [os.path.splitext(file)[0] for file in os.listdir(path_to_core_library)]
